@@ -22,7 +22,7 @@ const Chat = () => {
   // This will hold the system message about parameter changes
   const [systemMessage, setSystemMessage] = useState<string | null>(null);
 
-  const { messages, input, handleInputChange, handleSubmit } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, setMessages } = useChat({
     api: "/api/openai",
     body: {
       experienceLevel,
@@ -36,6 +36,10 @@ const Chat = () => {
       }
     }
   });
+
+  const clearChat = () => {
+    setMessages([]);
+  };
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -65,11 +69,27 @@ const Chat = () => {
 
   return (
     <Card className="flex flex-col h-[70vh] md:h-[80vh]">
+      <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center gap-2">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src="/ai-avatar.png" alt="AI" />
+            <AvatarFallback>AI</AvatarFallback>
+          </Avatar>
+          <div>
+            <h2 className="text-sm font-semibold">AI Mentor</h2>
+            <p className="text-xs text-muted-foreground">Online</p>
+          </div>
+        </div>
+        <Button variant="ghost" size="sm" onClick={clearChat}>
+          Clear Chat
+        </Button>
+      </div>
+
       {/* Chat message area with scroll */}
       <ScrollArea className="flex-grow p-4">
         {systemMessage && (
-          <Alert className="mb-4">
-            <AlertDescription className="text-xs text-muted-foreground">
+          <Alert className="mb-4 bg-blue-50 border-blue-200">
+            <AlertDescription className="text-xs text-blue-700">
               {systemMessage}
             </AlertDescription>
           </Alert>

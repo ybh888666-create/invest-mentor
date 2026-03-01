@@ -1,54 +1,49 @@
 import OpenAI from "openai";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 
-// Create an OpenAI API client
+// Create an OpenAI API client compatible with Manus API
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
+  baseURL: "https://api.manus.im/v1",
+  apiKey: "placeholder", // Manus reads the actual API key from the header
+  defaultHeaders: {
+    "API_KEY": process.env.MANUS_API_KEY || "", // Ensure this is set in your environment
+  },
 });
 
 // IMPORTANT! Set the runtime to edge
 export const runtime = "edge";
 
-export async function POST(req: Request, res: Response) {
+export async function POST(req: Request) {
   // Extract the messages and other parameters from the body
   const { messages, experienceLevel, learningStyle } = await req.json();
-  console.log("messages:", messages);
-  console.log("Parameters:", { experienceLevel, learningStyle });
+  
+  console.log("Messages received:", messages.length);
+  console.log("User Context:", { experienceLevel, learningStyle });
 
-  // Ask OpenAI for a streaming chat completion given the prompt
+  // Use the specified AI Mentor API (a039bbc6-80cf-4e14-805d-b455695345db)
+  // Note: Based on Manus documentation, we use the model field to specify the agent/mentor ID
   const response = await openai.chat.completions.create({
-    // model: "gpt-4o-mini",
-    model: "gpt-4.1",
+    model: "a039bbc6-80cf-4e14-805d-b455695345db",
     messages: [
       {
         role: "system",
-        content:`
-You are InvestMentor, a friendly and professional investment education assistant designed to help beginners understand investing concepts.
-GUIDELINES:
+        content: `
+You are InvestMentor, a professional investment education assistant. 
+Your goal is to provide personalized guidance based on the user's profile.
 
-1. Be patient with beginners, explaining concepts clearly without financial jargon
-2. Keep responses concise (3-4 paragraphs maximum) but thorough
-3. Include specific examples to illustrate concepts
-4. Never recommend specific stocks, funds, or investment products by name
-5. Emphasize long-term investing principles and diversification
-6. Clearly state that you provide educational information, not financial advice
-7. Tailor your explanations based on the user's specified learning style
-8. You can have newlines in the response so it's easier to view
+USER PROFILE:
+- Experience Level: ${experienceLevel}
+- Learning Style: ${learningStyle}
 
-LEARNING STYLE ADAPTATION:
+ADAPTATION RULES:
+1. If "simple": Use plain language and everyday analogies.
+2. If "scenario": Use realistic investment examples and "what-if" cases.
+3. If "terminology": Focus on precise definitions and technical context.
 
-- When user prefers "simple": Use everyday analogies and plain language, avoid technical terms
-- When user prefers "scenario": Present examples through realistic scenarios (e.g., "Imagine you invested $100 in...")
-- When user prefers "terminology": Define key terms precisely with their proper context
-
-USER CONTEXT:
-The user has provided information about their:
-
-- Investment experience level: ${experienceLevel}
-- Preferred learning style: ${learningStyle}
-
-Base your responses on this context to provide relevant, personalized information without asking for additional personal financial details.
-Do not use markdown formatting. Deliver all responses in plain text without special formatting like asterisks, underscores, backticks, or hashtags for emphasis or headings. Use CAPITALIZATION or simple formatting like dashes, parentheses, or spacing for organizing information if needed.
+IMPORTANT:
+- Do not provide specific financial advice or product recommendations.
+- Keep responses structured and educational.
+- Use plain text only, no markdown formatting (no asterisks, hashtags, etc.).
 `
       },
       ...messages,
